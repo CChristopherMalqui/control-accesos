@@ -44,19 +44,31 @@ function flashScreen(kind) {
   el.flash.className = `screen-flash ${kind}`;
 }
 
-function addHistory(kind, label) {
-  const li = document.createElement("li");
-  li.className = kind;
-  li.innerHTML = `<span class="tag"></span><span class="what"></span><time></time>`;
-  li.querySelector(".what").textContent = label;
-  li.querySelector("time").textContent = new Date().toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit", hour12: false });
-  el.history.prepend(li);
-  while (el.history.children.length > 4) el.history.lastElementChild.remove();
+const LABEL = { OK: "PERMITIDO", USED: "YA USADO", INVALID: "NO VÁLIDO" };
+let lastFeedId = -1;
+
+function renderHistory(items) {
+  el.history.replaceChildren(...items.map((it) => {
+    const li = document.createElement("li");
+    li.className = it.result === "OK" ? "ok" : "bad";
+    li.innerHTML = `<span class="tag"></span><span class="what"></span><time></time>`;
+    li.querySelector(".what").textContent = it.code ? `${it.code} · ${LABEL[it.result]}` : LABEL[it.result];
+    li.querySelector("time").textContent = new Date(it.created_at).toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
+    return li;
+  }));
 }
 
-async function loadStats() {
-  try { const s = await rpc("qr_stats"); setStats(s.used, s.total); }
-  catch (e) { console.error(e); }
+// Historial y contadores COMPARTIDOS: todos los celulares ven lo mismo
+let feedBusy = false;
+async function loadFeed() {
+  if (feedBusy) return;
+  feedBusy = true;
+  try {
+    const f = await rpc("live_feed", { p_limit: 5 });
+    setStats(f.used, f.total);
+    if (f.last_id !== lastFeedId) { lastFeedId = f.last_id; renderHistory(f.recent); }
+  } catch (e) { console.error(e); }
+  finally { feedBusy = false; }
 }
 
 // ---------- UI ----------
@@ -98,15 +110,15 @@ async function onScan(text) {
     setStats(r.used, r.total);
     if (r.result === "OK") {
       show("ok", "ACCESO PERMITIDO", r.code);
-      flashScreen("ok"); addHistory("ok", `${r.code} · PERMITIDO`);
+      flashScreen("ok");
       beep(true);
     } else if (r.result === "USED") {
       show("bad", "QR YA UTILIZADO", `${r.code} · usado a las ${hora(r.used_at)}`);
-      flashScreen("bad"); addHistory("bad", `${r.code} · YA USADO`);
+      flashScreen("bad");
       beep(false);
     } else {
       show("bad", "QR NO VÁLIDO", "Código no registrado");
-      flashScreen("bad"); addHistory("bad", "NO VÁLIDO");
+      flashScreen("bad");
       beep(false);
     }
   } catch (e) {
@@ -115,6 +127,7 @@ async function onScan(text) {
     show("warn", "SIN CONEXIÓN", "Vuelve a escanear");
     beep(false);
   } finally {
+    loadFeed();
     setTimeout(() => (busy = false), COOLDOWN_MS);
   }
 }
@@ -159,5 +172,7 @@ async function stopScanner() {
 el.start.addEventListener("click", startScanner);
 el.stop.addEventListener("click", stopScanner);
 
-loadStats();
-setInterval(loadStats, 15000); // sincroniza si hay más de un celular
+// Sincronización en vivo entre dispositivos
+loadFeed();
+setInterval(() => { if (!document.hidden) loadFeed(); }, 2500);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) loadFeed(); });
