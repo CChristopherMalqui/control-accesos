@@ -1,0 +1,33 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: #0b0b0c; color: #fff; font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
+.app { max-width: 520px; margin: 0 auto; min-height: 100dvh; padding: 14px 14px calc(14px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 12px; }
+
+h1 { font-size: 22px; font-weight: 900; letter-spacing: 2px; text-align: center; padding: 4px 0 10px; }
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.stat { background: #1a1a1d; border-radius: 14px; padding: 10px; text-align: center; }
+.stat span { display: block; font-size: 38px; font-weight: 900; line-height: 1.1; }
+.stat small { font-size: 12px; font-weight: 700; letter-spacing: 1px; color: #bbb; }
+.stat small em { font-style: normal; }
+.stat.ok span { color: #22e06b; }
+
+.result { border-radius: 18px; padding: 22px 14px; text-align: center; min-height: 140px; display: flex; flex-direction: column; justify-content: center; gap: 8px; transition: background .12s; }
+.result-title { font-size: clamp(28px, 9vw, 42px); font-weight: 900; line-height: 1.05; }
+.result-sub { font-size: 20px; font-weight: 700; opacity: .95; }
+.result.idle { background: #1a1a1d; }
+.result.idle .result-title { font-size: 22px; color: #ddd; }
+.result.checking { background: #2b2b30; }
+.result.ok { background: #0fbf4f; color: #fff; }
+.result.bad { background: #e0182d; color: #fff; }
+.result.warn { background: #f2a600; color: #000; }
+.flash { animation: flash .35s ease-out; }
+@keyframes flash { from { transform: scale(1.04); } to { transform: scale(1); } }
+
+.reader { width: 100%; border-radius: 16px; overflow: hidden; background: #000; }
+.reader video { width: 100% !important; display: block; }
+.hidden { display: none !important; }
+
+.actions { display: grid; gap: 10px; margin-top: auto; }
+.btn { border: 0; border-radius: 16px; font-size: 22px; font-weight: 900; letter-spacing: 1px; padding: 22px; width: 100%; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.btn:active { transform: scale(.98); }
+.btn.primary { background: #fff; color: #000; }
+.btn.stop { background: #2b2b30; color: #fff; font-size: 18px; padding: 16px; }

@@ -1,0 +1,5 @@
+imprimir/
+*.csv
+*.pdf
+.vercel
+sql/setup.sql

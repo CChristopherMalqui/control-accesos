@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0b0c">
+  <title>Control de Accesos</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <header>
+      <h1>CONTROL DE ACCESOS</h1>
+      <div class="stats">
+        <div class="stat"><span id="used">–</span><small>USADOS <em id="usedOf">/150</em></small></div>
+        <div class="stat ok"><span id="available">–</span><small>DISPONIBLES</small></div>
+      </div>
+    </header>
+
+    <section id="result" class="result idle">
+      <div id="resultTitle" class="result-title">LISTO PARA ESCANEAR</div>
+      <div id="resultSub" class="result-sub">Presiona ESCANEAR QR</div>
+    </section>
+
+    <div id="reader" class="reader hidden"></div>
+
+    <div class="actions">
+      <button id="btnStart" class="btn primary">ESCANEAR QR</button>
+      <button id="btnStop" class="btn stop hidden">DETENER CÁMARA</button>
+    </div>
+  </main>
+
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
