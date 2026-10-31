@@ -4,7 +4,8 @@ const $ = (id) => document.getElementById(id);
 const el = {
   used: $("used"), usedOf: $("usedOf"), available: $("available"),
   result: $("result"), title: $("resultTitle"), sub: $("resultSub"),
-  reader: $("reader"), start: $("btnStart"), stop: $("btnStop"),
+  reader: $("readerWrap"), start: $("btnStart"), stop: $("btnStop"),
+  bar: $("barFill"), flash: $("screenFlash"), history: $("history"),
 };
 
 let scanner = null;
@@ -24,10 +25,33 @@ async function rpc(fn, body = {}) {
   return res.json();
 }
 
+function bump(node, value) {
+  if (node.textContent === String(value)) return;
+  node.textContent = value;
+  node.classList.remove("bump"); void node.offsetWidth; node.classList.add("bump");
+}
+
 function setStats(used, total) {
-  el.used.textContent = used;
+  bump(el.used, used);
+  bump(el.available, total - used);
   el.usedOf.textContent = `/${total}`;
-  el.available.textContent = total - used;
+  el.bar.style.width = `${total ? (used / total) * 100 : 0}%`;
+}
+
+function flashScreen(kind) {
+  el.flash.className = "screen-flash";
+  void el.flash.offsetWidth;
+  el.flash.className = `screen-flash ${kind}`;
+}
+
+function addHistory(kind, label) {
+  const li = document.createElement("li");
+  li.className = kind;
+  li.innerHTML = `<span class="tag"></span><span class="what"></span><time></time>`;
+  li.querySelector(".what").textContent = label;
+  li.querySelector("time").textContent = new Date().toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit", hour12: false });
+  el.history.prepend(li);
+  while (el.history.children.length > 4) el.history.lastElementChild.remove();
 }
 
 async function loadStats() {
@@ -44,7 +68,7 @@ function show(kind, title, sub = "") {
   el.result.classList.add("flash");
 }
 
-const hora = (iso) => iso ? new Date(iso).toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
+const hora = (iso) => iso ? new Date(iso).toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }) : "";
 
 let audioCtx;
 function beep(ok) {
@@ -74,12 +98,15 @@ async function onScan(text) {
     setStats(r.used, r.total);
     if (r.result === "OK") {
       show("ok", "ACCESO PERMITIDO", r.code);
+      flashScreen("ok"); addHistory("ok", `${r.code} · PERMITIDO`);
       beep(true);
     } else if (r.result === "USED") {
       show("bad", "QR YA UTILIZADO", `${r.code} · usado a las ${hora(r.used_at)}`);
+      flashScreen("bad"); addHistory("bad", `${r.code} · YA USADO`);
       beep(false);
     } else {
       show("bad", "QR NO VÁLIDO", "Código no registrado");
+      flashScreen("bad"); addHistory("bad", "NO VÁLIDO");
       beep(false);
     }
   } catch (e) {
@@ -111,7 +138,7 @@ async function startScanner() {
     );
     el.start.classList.add("hidden");
     el.stop.classList.remove("hidden");
-    show("idle", "APUNTA AL QR", "Escaneo continuo activo");
+    show("idle", "APUNTA AL QR", "Escaneo automático activo");
   } catch (e) {
     console.error(e);
     el.reader.classList.add("hidden");
